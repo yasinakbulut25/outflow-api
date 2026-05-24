@@ -2,7 +2,7 @@
 
 Outflow'un backend'i — **Next.js (App Router) Route Handlers** + **MySQL**. Hem web hem de
 React Native mobil istemciye aynı REST API'yi sunar. API sözleşmesi, veri modeli ve iş kuralları
-için ana repodaki [`SPEC.md`](../outflow/SPEC.md) kaynaktır.
+için bu repodaki [`SPEC.md`](./SPEC.md) kaynaktır.
 
 ## Gereksinimler
 - Node.js 18+
