@@ -559,9 +559,10 @@ export function getAuthUser(req: NextRequest): TokenPayload | null {
 4. **Taksit dağıtımı (uygulama katmanı):**
    - `month` **yoksa** (tüm yıl):
      - Peşin: `expense_date` yılı == `year` ise ekle.
-     - Taksitli: satın alındığı yıl == `year` ise kartı olduğu gibi ekle; değilse,
-       `generateInstallmentSchedule` ile o yıla düşen her ödeme için
-       `{...e, installment_display_month, installment_current_no}` kopyası ekle.
+     - Taksitli (§3.4): satın alındığı yıl == `year` ise kartı kendi ayında ekle; **ayrıca her
+       durumda** `generateInstallmentSchedule` ile o yıla düşen her ödeme için
+       `{...e, installment_display_month, installment_current_no}` kopyası ekle. Böylece "Tümü"
+       görünümü ay-bazlı görünümle tutarlıdır (taksit ödemeleri aynı yıl içinde de yayılır).
    - `month` **varsa:** aynı mantık ama tek aya (`YYYY-MM`) göre.
 **Yanıt:** `{ success:true, data: Expense[] }`
 

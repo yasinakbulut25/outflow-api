@@ -110,13 +110,13 @@ export async function GET(req: NextRequest) {
         if (e.payment_type === 'cash') {
           if (ey === year) result.push(e);
         } else if (e.installment_count) {
-          if (ey === year) {
-            result.push(e);
-          } else {
-            const schedule = generateInstallmentSchedule(e.expense_date, e.total_amount, e.installment_count);
-            for (const p of schedule.filter((s) => s.date.startsWith(`${year}`))) {
-              result.push({ ...e, installment_display_month: p.date, installment_current_no: p.installmentNo });
-            }
+          // §3.4: satın alındığı yıl bu yılsa kartı kendi ayında göster
+          if (ey === year) result.push(e);
+          // §3.4: o yıla düşen taksit ödemelerini ayrı satırlar olarak yay (aynı yıl dahil),
+          // böylece "Tümü" görünümü ay-bazlı görünümle tutarlı olur.
+          const schedule = generateInstallmentSchedule(e.expense_date, e.total_amount, e.installment_count);
+          for (const p of schedule.filter((s) => s.date.startsWith(`${year}`))) {
+            result.push({ ...e, installment_display_month: p.date, installment_current_no: p.installmentNo });
           }
         }
       }
