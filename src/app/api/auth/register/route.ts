@@ -6,11 +6,11 @@ import { signToken } from '@/lib/server-auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password, display_name } = await req.json();
+    const { email, name, password } = await req.json();
 
-    if (!username?.trim() || !password) {
+    if (!email?.trim() || !password) {
       return NextResponse.json(
-        { success: false, message: 'Kullanıcı adı ve şifre gerekli' },
+        { success: false, message: 'E-posta ve şifre gerekli' },
         { status: 400 }
       );
     }
@@ -21,31 +21,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const [existing] = await pool.query<RowDataPacket[]>(
-      'SELECT id FROM users WHERE username = ?',
-      [username.trim()]
+      'SELECT id FROM users WHERE email = ?',
+      [normalizedEmail]
     );
     if (existing.length) {
       return NextResponse.json(
-        { success: false, message: 'Bu kullanıcı adı zaten alınmış' },
+        { success: false, message: 'Bu e-posta zaten kayıtlı' },
         { status: 409 }
       );
     }
 
     const password_hash = await bcrypt.hash(password, 10);
     const [result] = await pool.query<ResultSetHeader>(
-      'INSERT INTO users (username, display_name, password_hash) VALUES (?, ?, ?)',
-      [username.trim(), display_name?.trim() || null, password_hash]
+      'INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?)',
+      [normalizedEmail, name?.trim() || null, password_hash]
     );
 
-    const token = signToken({ user_id: result.insertId, username: username.trim() });
+    const token = signToken({ user_id: result.insertId });
 
     return NextResponse.json(
       {
         success: true,
         data: {
           token,
-          user: { id: result.insertId, username: username.trim(), display_name: display_name?.trim() || null },
+          user: { id: result.insertId, email: normalizedEmail, name: name?.trim() || null },
         },
       },
       { status: 201 }

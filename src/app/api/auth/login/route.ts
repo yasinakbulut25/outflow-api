@@ -6,43 +6,40 @@ import type { RowDataPacket } from 'mysql2';
 
 interface UserRow extends RowDataPacket {
   id: number;
-  username: string;
-  display_name: string | null;
+  email: string;
+  name: string | null;
   password_hash: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json();
+    const { email, password } = await req.json();
 
-    if (!username || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { success: false, message: 'Kullanıcı adı ve şifre gerekli' },
+        { success: false, message: 'E-posta ve şifre gerekli' },
         { status: 400 }
       );
     }
 
     const [rows] = await pool.query<UserRow[]>(
-      'SELECT id, username, display_name, password_hash FROM users WHERE username = ?',
-      [username]
+      'SELECT id, email, name, password_hash FROM users WHERE email = ?',
+      [email.trim().toLowerCase()]
     );
 
     const user = rows[0];
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    if (!user?.password_hash || !(await bcrypt.compare(password, user.password_hash))) {
       return NextResponse.json(
-        { success: false, message: 'Kullanıcı adı veya şifre hatalı' },
+        { success: false, message: 'E-posta veya şifre hatalı' },
         { status: 401 }
       );
     }
 
-    const token = signToken({ user_id: user.id, username: user.username });
+    const token = signToken({ user_id: user.id });
 
     return NextResponse.json({
       success: true,
-      data: {
-        token,
-        user: { id: user.id, username: user.username, display_name: user.display_name },
-      },
+      data: { token, user: { id: user.id, email: user.email, name: user.name } },
     });
   } catch (err) {
     console.error('[login]', err);
