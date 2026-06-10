@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
 import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/server-auth';
-import { materializeRecurringIncome } from '@/lib/recurring-income-materializer';
+import { expandRecurringIncomes } from '@/lib/recurring-income-expander';
 import type { Income } from '@/types';
 
 interface IncomeRow extends RowDataPacket {
@@ -41,9 +41,6 @@ export async function GET(req: NextRequest) {
     const monthParam = searchParams.get('month');
     const month = monthParam ? Number(monthParam) : undefined;
 
-    // Tekrarlayan gelirleri bu aya/yıla kadar materyalize et
-    await materializeRecurringIncome(user.user_id, year, month);
-
     const conditions = ['user_id = ?', 'YEAR(income_date) = ?'];
     const queryParams: (number)[] = [user.user_id, year];
     if (month) {
@@ -61,7 +58,10 @@ export async function GET(req: NextRequest) {
       queryParams,
     );
 
-    return NextResponse.json({ success: true, data: rows.map(rowToIncome) });
+    // Tekrarlayan gelirleri şablondan türet (DB'ye yazmadan) ve sonuca ekle.
+    const recurring = await expandRecurringIncomes(user.user_id, year, month);
+
+    return NextResponse.json({ success: true, data: [...rows.map(rowToIncome), ...recurring] });
   } catch (err) {
     console.error('[incomes GET]', err);
     return NextResponse.json({ success: false, message: 'Sunucu hatası' }, { status: 500 });

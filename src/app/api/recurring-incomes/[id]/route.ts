@@ -14,7 +14,6 @@ interface IncomeTemplateRow extends RowDataPacket {
   end_date: string | null;
   note: string | null;
   active: number;
-  last_generated_month: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -30,7 +29,6 @@ function rowToTemplate(r: IncomeTemplateRow): RecurringIncomeTemplate {
     end_date: r.end_date,
     note: r.note ?? undefined,
     active: r.active === 1,
-    last_generated_month: r.last_generated_month,
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -41,7 +39,7 @@ async function fetchOne(id: number, userId: number): Promise<RecurringIncomeTemp
     `SELECT id, user_id, title, amount, day_of_month,
             DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
             DATE_FORMAT(end_date,   '%Y-%m-%d') AS end_date,
-            note, active, last_generated_month, created_at, updated_at
+            note, active, created_at, updated_at
      FROM recurring_income_templates
      WHERE id = ? AND user_id = ?`,
     [id, userId],

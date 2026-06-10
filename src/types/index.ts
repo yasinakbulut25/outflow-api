@@ -39,6 +39,8 @@ export interface Expense {
   installment_current_no?: number;
   // Tekrarlayan şablondan üretildiyse set edilir
   recurring_template_id?: number;
+  // Şablondan okuma anında türetilmiş sanal occurrence (DB'de satır yok)
+  projected?: boolean;
 }
 
 export interface CreateExpensePayload {
@@ -65,7 +67,6 @@ export interface RecurringTemplate {
   end_date?: string | null;
   note?: string;
   active: boolean;
-  last_generated_month?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -90,6 +91,8 @@ export interface Income {
   recurring_income_id?: number;
   created_at: string;
   updated_at: string;
+  // Şablondan okuma anında türetilmiş sanal occurrence (DB'de satır yok)
+  projected?: boolean;
 }
 
 export interface CreateIncomePayload {
@@ -109,7 +112,6 @@ export interface RecurringIncomeTemplate {
   end_date?: string | null;
   note?: string;
   active: boolean;
-  last_generated_month?: string | null;
   created_at: string;
   updated_at: string;
 }

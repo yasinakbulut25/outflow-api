@@ -3,8 +3,8 @@ import type { RowDataPacket } from 'mysql2';
 import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/server-auth';
 import { generateInstallmentSchedule } from '@/lib/formatters';
-import { materializeRecurring } from '@/lib/recurring-materializer';
-import { materializeRecurringIncome } from '@/lib/recurring-income-materializer';
+import { expandRecurringExpenses } from '@/lib/recurring-expander';
+import { expandRecurringIncomes } from '@/lib/recurring-income-expander';
 import type { AnalyticsSummary } from '@/types';
 
 interface ExpenseRow extends RowDataPacket {
@@ -31,10 +31,6 @@ export async function GET(req: NextRequest) {
 
   try {
     const year = Number(new URL(req.url).searchParams.get('year') ?? new Date().getFullYear());
-
-    // Veri eksiksiz olsun diye tekrarlayan gider ve gelirleri bu yıla kadar materyalize et
-    await materializeRecurring(user.user_id, year);
-    await materializeRecurringIncome(user.user_id, year);
 
     // Bu yıla ilgili harcamalar
     const [rows] = await pool.query<ExpenseRow[]>(
@@ -97,6 +93,17 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Tekrarlayan ödemeleri şablondan türet (cash) ve aylık + kategori toplamlarına kat
+    const recurringExpenses = await expandRecurringExpenses(user.user_id, year);
+    for (const e of recurringExpenses) {
+      const monthKey = e.expense_date.slice(0, 7);
+      monthlyMap.set(monthKey, (monthlyMap.get(monthKey) ?? 0) + e.total_amount);
+      if (e.category_id) {
+        const cat = categoryMap.get(e.category_id) ?? { name: e.category_name ?? '', icon: e.category_icon ?? '', color: e.category_color ?? '', total: 0 };
+        categoryMap.set(e.category_id, { ...cat, total: cat.total + e.total_amount });
+      }
+    }
+
     // Bu yıla ait gelirler (aylık toplam)
     const [incomeRows] = await pool.query<IncomeRow[]>(
       `SELECT DATE_FORMAT(income_date, '%Y-%m-%d') AS income_date, amount
@@ -109,6 +116,13 @@ export async function GET(req: NextRequest) {
     for (const r of incomeRows) {
       const monthKey = r.income_date.slice(0, 7);
       incomeMap.set(monthKey, (incomeMap.get(monthKey) ?? 0) + Number(r.amount));
+    }
+
+    // Tekrarlayan gelirleri şablondan türet ve aylık gelir toplamına kat
+    const recurringIncomes = await expandRecurringIncomes(user.user_id, year);
+    for (const inc of recurringIncomes) {
+      const monthKey = inc.income_date.slice(0, 7);
+      incomeMap.set(monthKey, (incomeMap.get(monthKey) ?? 0) + inc.amount);
     }
 
     // Aylık net: gelir ve gider aylarının birleşimi

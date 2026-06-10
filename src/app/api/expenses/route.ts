@@ -3,7 +3,7 @@ import type { RowDataPacket, ResultSetHeader } from 'mysql2';
 import pool from '@/lib/db';
 import { getAuthUser } from '@/lib/server-auth';
 import { generateInstallmentSchedule } from '@/lib/formatters';
-import { materializeRecurring } from '@/lib/recurring-materializer';
+import { expandRecurringExpenses } from '@/lib/recurring-expander';
 import type { Expense } from '@/types';
 
 interface ExpenseRow extends RowDataPacket {
@@ -98,9 +98,6 @@ export async function GET(req: NextRequest) {
     const monthParam = searchParams.get('month');
     const month = monthParam ? Number(monthParam) : undefined;
 
-    // Tekrarlayan şablonların bu aya kadar olan harcama satırlarını üret
-    await materializeRecurring(user.user_id, year, month);
-
     const allExpenses = await fetchExpensesForYear(user.user_id, year);
     const result: Expense[] = [];
 
@@ -138,6 +135,11 @@ export async function GET(req: NextRequest) {
         }
       }
     }
+
+    // Tekrarlayan ödemeleri şablondan türet (DB'ye yazmadan) ve sonuca ekle.
+    // expandRecurringExpenses zaten istenen yıl/ay aralığına göre filtreli döner.
+    const recurring = await expandRecurringExpenses(user.user_id, year, month);
+    result.push(...recurring);
 
     return NextResponse.json({ success: true, data: result });
   } catch (err) {

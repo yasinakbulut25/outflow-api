@@ -18,7 +18,6 @@ interface TemplateRow extends RowDataPacket {
   end_date: string | null;
   note: string | null;
   active: number;
-  last_generated_month: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,7 +37,6 @@ function rowToTemplate(r: TemplateRow): RecurringTemplate {
     end_date: r.end_date,
     note: r.note ?? undefined,
     active: r.active === 1,
-    last_generated_month: r.last_generated_month,
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -49,7 +47,7 @@ async function fetchOne(id: number, userId: number): Promise<RecurringTemplate |
     `SELECT t.id, t.user_id, t.category_id, t.title, t.amount, t.day_of_month,
             DATE_FORMAT(t.start_date, '%Y-%m-%d') AS start_date,
             DATE_FORMAT(t.end_date,   '%Y-%m-%d') AS end_date,
-            t.note, t.active, t.last_generated_month, t.created_at, t.updated_at,
+            t.note, t.active, t.created_at, t.updated_at,
             c.name AS category_name, c.icon AS category_icon, c.color AS category_color
      FROM recurring_templates t
      LEFT JOIN categories c ON c.id = t.category_id
@@ -68,7 +66,7 @@ export async function GET(req: NextRequest) {
       `SELECT t.id, t.user_id, t.category_id, t.title, t.amount, t.day_of_month,
               DATE_FORMAT(t.start_date, '%Y-%m-%d') AS start_date,
               DATE_FORMAT(t.end_date,   '%Y-%m-%d') AS end_date,
-              t.note, t.active, t.last_generated_month, t.created_at, t.updated_at,
+              t.note, t.active, t.created_at, t.updated_at,
               c.name AS category_name, c.icon AS category_icon, c.color AS category_color
        FROM recurring_templates t
        LEFT JOIN categories c ON c.id = t.category_id
