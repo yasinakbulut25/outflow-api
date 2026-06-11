@@ -45,8 +45,8 @@ export async function GET(req: NextRequest) {
            (e.payment_type = 'cash' AND YEAR(e.expense_date) = ?)
            OR
            (e.payment_type = 'installment'
-            AND YEAR(DATE_ADD(e.expense_date, INTERVAL 1 MONTH)) <= ?
-            AND YEAR(DATE_ADD(e.expense_date, INTERVAL e.installment_count MONTH)) >= ?)
+            AND YEAR(e.expense_date) <= ?
+            AND YEAR(DATE_ADD(e.expense_date, INTERVAL e.installment_count - 1 MONTH)) >= ?)
          )`,
       [user.user_id, year, year, year]
     );

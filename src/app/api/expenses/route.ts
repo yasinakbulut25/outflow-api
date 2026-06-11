@@ -47,8 +47,8 @@ async function fetchExpensesForYear(userId: number, year: number): Promise<Expen
          (e.payment_type = 'cash' AND YEAR(e.expense_date) = ?)
          OR
          (e.payment_type = 'installment'
-          AND YEAR(DATE_ADD(e.expense_date, INTERVAL 1 MONTH)) <= ?
-          AND YEAR(DATE_ADD(e.expense_date, INTERVAL e.installment_count MONTH)) >= ?)
+          AND YEAR(e.expense_date) <= ?
+          AND YEAR(DATE_ADD(e.expense_date, INTERVAL e.installment_count - 1 MONTH)) >= ?)
        )
      ORDER BY e.expense_date DESC, e.id DESC`,
     [userId, year, year, year]
@@ -107,10 +107,8 @@ export async function GET(req: NextRequest) {
         if (e.payment_type === 'cash') {
           if (ey === year) result.push(e);
         } else if (e.installment_count) {
-          // §3.4: satın alındığı yıl bu yılsa kartı kendi ayında göster
-          if (ey === year) result.push(e);
-          // §3.4: o yıla düşen taksit ödemelerini ayrı satırlar olarak yay (aynı yıl dahil),
-          // böylece "Tümü" görünümü ay-bazlı görünümle tutarlı olur.
+          // §3.4: her taksit (1. taksit = alım ayı dahil) o aya düşen ödeme satırı olarak yayılır,
+          // böylece "Tümü" görünümü ay-bazlı görünümle tutarlı olur ve alım ayı da aylık tutarı gösterir.
           const schedule = generateInstallmentSchedule(e.expense_date, e.total_amount, e.installment_count);
           for (const p of schedule.filter((s) => s.date.startsWith(`${year}`))) {
             result.push({ ...e, installment_display_month: p.date, installment_current_no: p.installmentNo });
@@ -125,13 +123,10 @@ export async function GET(req: NextRequest) {
         if (e.payment_type === 'cash') {
           if (isOriginalMonth) result.push(e);
         } else if (e.installment_count) {
-          if (isOriginalMonth) {
-            result.push(e);
-          } else {
-            const schedule = generateInstallmentSchedule(e.expense_date, e.total_amount, e.installment_count);
-            const p = schedule.find((s) => s.date === monthKey);
-            if (p) result.push({ ...e, installment_display_month: monthKey, installment_current_no: p.installmentNo });
-          }
+          // §3.4: alım ayı dahil her ay, o aya düşen taksit ödemesi olarak gösterilir.
+          const schedule = generateInstallmentSchedule(e.expense_date, e.total_amount, e.installment_count);
+          const p = schedule.find((s) => s.date === monthKey);
+          if (p) result.push({ ...e, installment_display_month: monthKey, installment_current_no: p.installmentNo });
         }
       }
     }

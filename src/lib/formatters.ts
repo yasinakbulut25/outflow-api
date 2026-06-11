@@ -29,9 +29,10 @@ export function calculateInstallmentAmount(total: number, count: number): number
   return Math.round((total / count) * 100) / 100;
 }
 
+// Taksit takvimi satın alınan aydan başlar (1. taksit = alım ayı).
 export function getInstallmentStartMonth(expenseDate: string): Date {
   const d = new Date(expenseDate + 'T00:00:00');
-  return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
 export function generateInstallmentSchedule(
