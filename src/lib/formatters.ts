@@ -41,13 +41,17 @@ export function generateInstallmentSchedule(
   installmentCount: number
 ): Array<{ date: string; amount: number; installmentNo: number }> {
   const monthlyAmount = calculateInstallmentAmount(totalAmount, installmentCount);
-  const startDate = getInstallmentStartMonth(expenseDate);
+  // 1. taksit = alım ayı. Ay anahtarı tamsayı aritmetiğiyle üretilir; `new Date(...).toISOString()`
+  // yerel gece yarısını UTC'ye çevirip UTC+ saat dilimlerinde ayın 1'ini bir geri kaydırırdı.
+  const [year, month] = expenseDate.slice(0, 7).split('-').map(Number); // month: 1-12
   const schedule = [];
 
   for (let i = 0; i < installmentCount; i++) {
-    const d = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+    const offset = month - 1 + i; // alım ayından itibaren 0-bazlı
+    const y = year + Math.floor(offset / 12);
+    const m = (offset % 12) + 1;
     schedule.push({
-      date: d.toISOString().slice(0, 7),
+      date: `${y}-${String(m).padStart(2, '0')}`,
       amount: monthlyAmount,
       installmentNo: i + 1,
     });
