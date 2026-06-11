@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPublicKey } from 'crypto';
+import { createPublicKey, type JsonWebKey } from 'crypto';
 import jwt from 'jsonwebtoken';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import pool from '@/lib/db';
@@ -37,7 +37,9 @@ async function verifyAppleToken(identityToken: string): Promise<AppleClaims> {
   const jwk = keys.find((k) => k.kid === header.kid);
   if (!jwk) throw new Error('Apple key not found');
 
-  const publicKey = createPublicKey({ key: jwk as Parameters<typeof createPublicKey>[0], format: 'jwk' });
+  // format:'jwk' verildiğinde `key` Node crypto'nun JsonWebKey'i olmalı (index signature'lı);
+  // AppleJwk alanları çalışma anında uyumlu, tip için unknown üzerinden daraltıyoruz.
+  const publicKey = createPublicKey({ key: jwk as unknown as JsonWebKey, format: 'jwk' });
   const pem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
 
   return jwt.verify(identityToken, pem, {
