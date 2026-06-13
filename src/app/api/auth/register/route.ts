@@ -3,9 +3,20 @@ import bcrypt from 'bcryptjs';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import pool from '@/lib/db';
 import { signToken } from '@/lib/server-auth';
+import { checkRateLimit, recordAuthAttempt, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const limit = await checkRateLimit(ip);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { success: false, message: 'Çok fazla deneme yapıldı. Lütfen biraz sonra tekrar deneyin.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
+      );
+    }
+    await recordAuthAttempt(ip, undefined);
+
     const { email, name, password } = await req.json();
 
     if (!email?.trim() || !password) {
