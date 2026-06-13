@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import pool from '@/lib/db';
 import { signToken } from '@/lib/server-auth';
+import { sendWelcomeEmail } from '@/lib/email';
 
 interface GoogleUserInfo {
   sub: string;
@@ -71,6 +72,16 @@ export async function POST(req: NextRequest) {
     );
 
     const token = signToken({ user_id: result.insertId });
+
+    // İlk kez kayıt olan kullanıcıya hoş geldin e-postası — gönderim hatası akışı bozmamalı.
+    if (email) {
+      try {
+        await sendWelcomeEmail(email, name ?? undefined);
+      } catch (mailErr) {
+        console.error('[auth/google] welcome email failed', mailErr);
+      }
+    }
+
     return NextResponse.json(
       { success: true, data: { token, user: { id: result.insertId, email, name } } },
       { status: 201 },

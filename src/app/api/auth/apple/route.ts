@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import pool from '@/lib/db';
 import { signToken } from '@/lib/server-auth';
+import { sendWelcomeEmail } from '@/lib/email';
 
 const APPLE_KEYS_URL = 'https://appleid.apple.com/auth/keys';
 const APPLE_ISSUER = 'https://appleid.apple.com';
@@ -112,6 +113,16 @@ export async function POST(req: NextRequest) {
     );
 
     const token = signToken({ user_id: result.insertId });
+
+    // İlk kez kayıt olan kullanıcıya hoş geldin e-postası — Apple e-postayı gizlemiş olabilir.
+    if (appleEmail) {
+      try {
+        await sendWelcomeEmail(appleEmail, name ?? undefined);
+      } catch (mailErr) {
+        console.error('[auth/apple] welcome email failed', mailErr);
+      }
+    }
+
     return NextResponse.json(
       { success: true, data: { token, user: { id: result.insertId, email: appleEmail, name } } },
       { status: 201 },

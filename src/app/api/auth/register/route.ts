@@ -4,6 +4,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import pool from '@/lib/db';
 import { signToken } from '@/lib/server-auth';
 import { checkRateLimit, recordAuthAttempt, getClientIp } from '@/lib/rate-limit';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,6 +53,13 @@ export async function POST(req: NextRequest) {
     );
 
     const token = signToken({ user_id: result.insertId });
+
+    // Hoş geldin e-postası — gönderim başarısız olsa bile kayıt akışını bozmamalı.
+    try {
+      await sendWelcomeEmail(normalizedEmail, name?.trim() || undefined);
+    } catch (mailErr) {
+      console.error('[register] welcome email failed', mailErr);
+    }
 
     return NextResponse.json(
       {
