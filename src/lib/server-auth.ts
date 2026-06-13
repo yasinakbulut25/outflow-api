@@ -24,3 +24,29 @@ export function getAuthUser(req: NextRequest): TokenPayload | null {
   if (!auth?.startsWith('Bearer ')) return null;
   return verifyToken(auth.slice(7));
 }
+
+// --- Şifre sıfırlama (OTP doğrulandıktan sonra kullanılan kısa ömürlü token) ---
+// OTP doğrulanınca üretilir; yalnızca yeni şifre belirleme adımını yetkilendirir.
+// `purpose` ile normal oturum token'larından ayrışır (oturum token'ı ile şifre
+// sıfırlanamaz, reset token'ı ile API'ye erişilemez).
+
+interface ResetTokenPayload {
+  user_id: number;
+  purpose: 'pwreset';
+}
+
+export function signResetToken(user_id: number): string {
+  return jwt.sign({ user_id, purpose: 'pwreset' } satisfies ResetTokenPayload, SECRET, {
+    expiresIn: '10m',
+  });
+}
+
+export function verifyResetToken(token: string): { user_id: number } | null {
+  try {
+    const payload = jwt.verify(token, SECRET) as ResetTokenPayload;
+    if (payload.purpose !== 'pwreset') return null;
+    return { user_id: payload.user_id };
+  } catch {
+    return null;
+  }
+}
