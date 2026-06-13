@@ -8,7 +8,10 @@ import { sendWelcomeEmail } from '@/lib/email';
 
 const APPLE_KEYS_URL = 'https://appleid.apple.com/auth/keys';
 const APPLE_ISSUER = 'https://appleid.apple.com';
-const APPLE_AUDIENCE = process.env.APPLE_BUNDLE_ID ?? 'com.outflow.app';
+// Apple identity token'ın `aud` alanı, isteği yapan uygulamanın bundle ID'sidir.
+// Mobil uygulamanın bundle ID'si com.yasinakbulut.outflow olduğundan varsayılan bu olmalı;
+// aksi halde audience eşleşmez ve token "Geçersiz Apple token" olarak reddedilir.
+const APPLE_AUDIENCE = process.env.APPLE_BUNDLE_ID ?? 'com.yasinakbulut.outflow';
 
 interface AppleJwk {
   kty: string;

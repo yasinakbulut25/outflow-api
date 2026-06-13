@@ -73,7 +73,7 @@ export async function sendWelcomeEmail(to: string, name?: string): Promise<void>
     { icon: '📅', title: 'Otomatik taksit planı', desc: 'Aylık taksit tutarın otomatik hesaplanır ve gelecek aylara dağıtılarak takvime işlenir.' },
     { icon: '🔁', title: 'Tekrarlayan ödemeler', desc: 'Kira, Netflix gibi sabit giderleri bir kez tanımla; her ay otomatik oluşturulsun.' },
     { icon: '💰', title: 'Gelir takibi', desc: 'Maaş gibi düzenli gelirlerini ve aya özel ek gelirlerini ekleyerek nakit akışını gör.' },
-    { icon: '🐷', title: 'Birikimler', desc: 'Birikim kayıtlarını ayrı bir ekranda izle, hedefine ne kadar yaklaştığını takip et.' },
+    { icon: '💵', title: 'Birikimler', desc: 'Birikim kayıtlarını ayrı bir ekranda izle, hedefine ne kadar yaklaştığını takip et.' },
     { icon: '📊', title: 'Analitik', desc: 'Kategori dağılımı, aylık özet ve gelir / gider / net durumunu tek bakışta gör.' },
   ];
 
@@ -103,7 +103,7 @@ export async function sendWelcomeEmail(to: string, name?: string): Promise<void>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="480" style="max-width:480px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden">
       <tr>
         <td style="padding:28px 32px 0">
-          <div style="font-size:20px;font-weight:700;color:#059669;letter-spacing:-0.3px">Outflow</div>
+          <div style="font-size:20px;font-weight:700;color:#3b82f6;letter-spacing:-0.3px">Outflow</div>
         </td>
       </tr>
       <tr>
@@ -123,7 +123,7 @@ export async function sendWelcomeEmail(to: string, name?: string): Promise<void>
       </tr>
       <tr>
         <td style="padding:12px 32px 8px">
-          <a href="https://outflow.yasinakbulut.dev" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 22px;border-radius:10px">Uygulamayı aç</a>
+          <a href="https://outflow.yasinakbulut.dev" style="display:inline-block;background:#3b82f6;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 22px;border-radius:10px">Uygulamayı aç</a>
         </td>
       </tr>
       <tr>
